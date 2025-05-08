@@ -3,7 +3,7 @@
 ## Team Size : 6 Members
  - Y. Hari Venkata Sai Tanuj Kumar
  - V. Chinna Koteswara Rao
- - N. Vihari
+ - N. Venkata Sai Surya Mano Vihari
  - G. Ranga Sri Venkata Sai
  - CH. Poojitha
  - N. Santhi
