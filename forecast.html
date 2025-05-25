@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detailed Forecast</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #83a4d4, #b6fbff);
+      margin: 0;
+      padding: 1rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #ffffffcc;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 2rem;
+    }
+    canvas {
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="cityName">Weather Forecast</h2>
+    <canvas id="tempChart"></canvas>
+    <canvas id="humidityChart"></canvas>
+    <canvas id="windChart"></canvas>
+  </div>
+
+  <script>
+    const cityCoords = {
+      "Hyderabad": { lat: 17.3850, lon: 78.4867 },
+      "Delhi": { lat: 28.6139, lon: 77.2090 },
+      "Mumbai": { lat: 19.0760, lon: 72.8777 },
+      "Bengaluru": { lat: 12.9716, lon: 77.5946 },
+      "Chennai": { lat: 13.0827, lon: 80.2707 },
+      "Kolkata": { lat: 22.5726, lon: 88.3639 },
+      "Pune": { lat: 18.5204, lon: 73.8567 },
+      "Ahmedabad": { lat: 23.0225, lon: 72.5714 }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const city = params.get('city');
+
+    if (!city || !cityCoords[city]) {
+      document.getElementById('cityName').innerText = "Invalid city!";
+      throw new Error("Invalid city");
+    }
+
+    document.getElementById('cityName').innerText = `Weather Forecast for ${city}`;
+
+    const { lat, lon } = cityCoords[city];
+    const now = new Date();
+    const endTime = now.toISOString().split('T')[0] + "T23:59";
+    const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + "T00:00";
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,humidity_2m,windspeed_10m&start_date=${startTime.split('T')[0]}&end_date=${endTime.split('T')[0]}&timezone=auto`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const labels = data.hourly.time;
+        const tempData = data.hourly.temperature_2m;
+        const humidityData = data.hourly.humidity_2m;
+        const windData = data.hourly.windspeed_10m;
+
+        drawChart("tempChart", "Temperature (°C)", labels, tempData, 'rgba(255, 99, 132, 0.6)');
+        drawChart("humidityChart", "Humidity (%)", labels, humidityData, 'rgba(54, 162, 235, 0.6)');
+        drawChart("windChart", "Wind Speed (km/h)", labels, windData, 'rgba(255, 206, 86, 0.6)');
+      })
+      .catch(err => {
+        document.querySelector('.container').innerHTML = `<h2 style="color:red">Failed to load weather data.</h2>`;
+        console.error(err);
+      });
+
+    function drawChart(canvasId, label, labels, data, color) {
+      new Chart(document.getElementById(canvasId), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: label,
+            data: data,
+            fill: true,
+            backgroundColor: color,
+            borderColor: color.replace('0.6', '1'),
+            borderWidth: 2,
+            tension: 0.3,
+            pointRadius: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              ticks: { maxRotation: 45, minRotation: 45 },
+              title: { display: true, text: 'Time' }
+            },
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
